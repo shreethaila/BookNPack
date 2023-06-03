@@ -12,8 +12,8 @@ module.exports={
         console.log(req.headers.cookie);
         let cookiestr=req.headers.cookie;
         const cookies = cookie.parse(cookiestr);
-        accesstoken=cookies.accessToken;
-        if (!accessToken){
+        let accesstoken=cookies.accessToken;
+        if (!accesstoken) {
             return res.status('401').json(
                 {
                     message: "Session expired login again"
@@ -55,6 +55,7 @@ module.exports={
     
                     res.cookie('accessToken',accesstoken,{
                         httpOnly:true,
+                        domain: process.env.HOST,
                         maxAge: 60*60*1000
                     });
                     next();
