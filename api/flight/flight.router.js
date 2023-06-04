@@ -1,8 +1,11 @@
-const {addflightsch,removeflight,cancelsch,searchflight}=require('./flight.controller');
+const {addflightsch,removeflight,cancelsch,searchflight,getairline,addflight,getflight}=require('./flight.controller');
 const router=require('express').Router();
 const {checkToken}=require('../../auth/tokenvalidation');
-router.post("/addsch",addflightsch);
+router.post("/addsch",checkToken,addflightsch);
 router.get("/search",checkToken,searchflight);
-router.post("/remove",removeflight);
-router.post("/cancelsch",cancelsch);
+router.delete("/remove/:id",checkToken,removeflight);
+router.post("/cancelsch",checkToken,cancelsch);
+router.get("/getairline",checkToken,getairline);
+router.get("/getflight",checkToken,getflight);
+router.post("/addflight",checkToken,addflight);
 module.exports = router;

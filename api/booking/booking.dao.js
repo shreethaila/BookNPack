@@ -35,7 +35,7 @@ module.exports={
     },
     mybookings:(uid,callback)=>{
         pool.query(
-            'select * from booking where uid=? order by dateofbooking desc',
+            'select b.bid,a.airlinename, f.flightnumber, t.source,t.destination, t.schdate,t.est_arrival_time,t.depature_time,b.booked_seats,b.totalamt,b.dateofbooking,b.status from booking b join travelschedule t on b.schid=t.schid join flight f on f.fid=t.fid join airline a on a.aid=f.aid where uid=? order by dateofbooking desc',
             [
                 uid
             ],
@@ -43,6 +43,7 @@ module.exports={
                 if (error){
                     return callback(error);
                 }
+                console.log("my booking")
                 return callback(null,results);
             }
         )
@@ -56,6 +57,7 @@ module.exports={
                 if (error){
                     return callback(error);
                 }
+                console.log("get all booking")
                 return callback(null,results);
             }
         )
@@ -76,7 +78,7 @@ module.exports={
     },
     getbookingByFlightNumberAndDate:(fn,date,callback)=>{
         pool.query(
-            'select from flight join travelschedule on flight.fid=travelschedule.fid as join booking on travelschedule.schid=booking.schid where flightnumber=? and  schdate=? order by dateofbooking desc',
+            'select b.bid,a.airlinename, f.flightnumber, t.source,t.destination, t.schdate,t.est_arrival_time,t.depature_time,b.booked_seats,b.totalamt,b.dateofbooking,b.status from booking b join travelschedule t on b.schid=t.schid join flight f on f.fid=t.fid join airline a on a.aid=f.aid where t.fid=? and t.schdate=? order by dateofbooking desc',
             [
                 fn,
                 date

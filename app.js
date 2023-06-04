@@ -10,9 +10,15 @@ app.use(cors({
     origin: process.env.FE_URL,
     credentials: true,
   }));
+  app.use((req, res, next) => {
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    next();
+  });
 
-app.use('/api/user',userRouter);
-app.use('/api/flight',flightRouter);
+app.use('/api/user', userRouter);
+app.use('/api/flight', flightRouter);
 app.use('/api/booking',bookingRouter);
 console.log(process.env.HOST);
 app.listen(process.env.APP_PORT,()=>{

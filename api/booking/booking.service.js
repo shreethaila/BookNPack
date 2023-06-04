@@ -8,6 +8,7 @@ module.exports={
             console.log(results[0].occ_seats);
             var occup_seats=results[0].occ_seats
             if (60-occup_seats-data.booked_seats>0){
+                //calculate fare
                 bookticket(data,callback);
             }else{
                 return callback(null,

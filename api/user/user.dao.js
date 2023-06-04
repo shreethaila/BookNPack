@@ -13,8 +13,8 @@ module.exports={
                 data.phoneno,
                 data.address,
                 data.email,
-                data.usertype,
-                data.accstatus
+                'user',
+                'active'
 
             ],
             (error, results, fields)=>{
@@ -39,7 +39,7 @@ module.exports={
     },
     getuserbyemail: (data,callback)=>{
         pool.query(
-            'select uid,email,password from user where email=?',
+            'select uid,email,password,usertype from user where email=?',
             [
                 data.email
             ],

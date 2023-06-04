@@ -37,14 +37,14 @@ module.exports={
                 return res.status(500).json(
                     {
                         success: 0,
-                        message: "Database connection error"
+                        message: "Internal server error"
                     }
                 );
             }else if (!results){
-                return res.status(400).json(
+                return res.status(401).json(
                     {
                         success: 0,
-                        message: "Invalid email or password"
+                        message: "Invalid credentials"
                     }
                 ); 
             }
@@ -67,6 +67,16 @@ module.exports={
                     domain: process.env.HOST,
                     maxAge: 7*24*60*60*1000
                 });
+                if (results.usertype=="user"){
+                    res.cookie('userLoggedIn', true, {
+                        maxAge: 7*24*60 * 60 * 1000
+                    });
+                }else{
+                    res.cookie('adminLoggedIn', true, {
+                        maxAge: 7*24*60 * 60 * 1000
+                    });
+                }
+                
                 return res.send(
                     {
                         message:'success'
@@ -83,10 +93,18 @@ module.exports={
         });
     },
     logout:(req,res)=>{
+        console.log(req)
+        console.log(res);
         res.cookie('accessToken','',{
             maxAge: 0
         });
         res.cookie('refreshToken','',{
+            maxAge: 0
+        });
+        res.cookie('userLoggedIn', '', {
+            maxAge: 0
+        });
+        res.cookie('adminLoggedIn', '', {
             maxAge: 0
         });
         return res.status(200).json(
