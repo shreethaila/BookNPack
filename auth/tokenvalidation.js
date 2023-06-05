@@ -53,7 +53,7 @@ module.exports = {
                                 sameSite: process.env.NODE_ENV == "dev" ? 'lax' : 'none',
                                 maxAge: 60 * 60 * 1000
                             });
-                            res.setHeaders('accessToken', accesstoken);
+             
                             
                             req.userId = decoded.uid;
                             next();

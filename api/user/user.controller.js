@@ -59,12 +59,6 @@ module.exports = {
                     expiresIn: "1w"
                 });
 
-                res.setHeader('accessToken', accesstoken);
-                res.setHeader('refreshToken', refreshtoken);
-                response = {
-                    'accessToken': accesstoken,
-                    'refreshToken': refreshtoken
-                }
 
                 res.cookie('accessToken', accesstoken, {
                     httpOnly: true,
@@ -81,7 +75,7 @@ module.exports = {
                     sameSite: process.env.NODE_ENV == "dev" ? 'lax' : 'none'
                 });
                 if (results.usertype == "user") {
-                    res.setHeader('userLoggedIn', true);
+             
                     res.cookie('userLoggedIn', true, {
                         maxAge: 7 * 24 * 60 * 60 * 1000,
                         secure: process.env.NODE_ENV == "dev" ? "auto" : true,
@@ -89,7 +83,7 @@ module.exports = {
                         sameSite: process.env.NODE_ENV == "dev" ? 'lax' : 'none'
                     });
                 } else {
-                    res.setHeader('adminLoggedIn', true);
+        
                     res.cookie('adminLoggedIn', true, {
                         maxAge: 7 * 24 * 60 * 60 * 1000,
                         secure: process.env.NODE_ENV == "dev" ? "auto" : true,
@@ -100,8 +94,7 @@ module.exports = {
 
                 return res.send(
                     {
-                        message: 'success',
-                        data: 'true'
+                        message: 'success'
                     }
                 )
             } else {
