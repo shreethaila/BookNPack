@@ -1,17 +1,17 @@
 const { compareSync } = require('bcrypt');
-const {create,getalluser,getuserbyemail}=require('./user.service');
-const {sign}=require('jsonwebtoken');
+const { create, getalluser, getuserbyemail } = require('./user.service');
+const { sign } = require('jsonwebtoken');
 //in helper validate the json
 //purpose of controller is
 //1.interact with client
 //2.perform validation
 //3.invoke service methods
 //4.return resposne
-module.exports={
-    createUser: (req,res)=>{
-        const body=req.body;
-        create(body,(err,results)=>{
-            if (err){
+module.exports = {
+    createUser: (req, res) => {
+        const body = req.body;
+        create(body, (err, results) => {
+            if (err) {
                 console.log(err);
                 return res.status(500).json(
                     {
@@ -22,17 +22,17 @@ module.exports={
             }
             return res.status(200).json(
                 {
-                    success:1,
-                    data:results
+                    success: 1,
+                    data: results
                 }
             );
         });
     },
-    getuserbyemail:(req,res)=>{
-        const body=req.body;
-        getuserbyemail(body,(err,results)=>{
+    getuserbyemail: (req, res) => {
+        const body = req.body;
+        getuserbyemail(body, (err, results) => {
             console.log(results);
-            if (err){
+            if (err) {
                 console.log(err);
                 return res.status(500).json(
                     {
@@ -40,77 +40,87 @@ module.exports={
                         message: "Internal server error"
                     }
                 );
-            }else if (!results){
+            } else if (!results) {
                 return res.status(401).json(
                     {
                         success: 0,
                         message: "Invalid credentials"
                     }
-                ); 
+                );
             }
-            const result=compareSync(body.password,results.password);
-            if (result){
-                results.password=undefined;
-                const accesstoken=sign({uid:results.uid},process.env.ACCESS_KEY,{
-                    expiresIn:"3s"
+            const result = compareSync(body.password, results.password);
+            let response = {};
+            if (result) {
+                results.password = undefined;
+                const accesstoken = sign({ uid: results.uid }, process.env.ACCESS_KEY, {
+                    expiresIn: "3s"
                 });
-                const refreshtoken=sign({uid:results.uid},process.env.REFRESH_KEY,{
-                    expiresIn:"1w"
+                const refreshtoken = sign({ uid: results.uid }, process.env.REFRESH_KEY, {
+                    expiresIn: "1w"
                 });
-                res.cookie('accessToken',accesstoken,{
-                    httpOnly:true,
-                    secure: true,
-                    domain: process.env.FE_URL,
-                    maxAge: 60*60*1000,
-                    sameSite: 'none'
+
+                res.setHeader('accessToken', accesstoken);
+                res.setHeader('refreshToken', refreshtoken);
+                response = {
+                    'accessToken': accesstoken,
+                    'refreshToken': refreshtoken
+                }
+
+                res.cookie('accessToken', accesstoken, {
+                    httpOnly: true,
+                    secure: process.env.NODE_ENV == "dev" ? "auto" : true,
+                    domain: process.env.BE_URL,
+                    maxAge: 60 * 60 * 1000,
+                    sameSite: process.env.NODE_ENV == "dev" ? 'lax' : 'none'
                 });
-                res.cookie('refreshToken',refreshtoken,{
-                    httpOnly:true,
-                    secure: true,
-                    domain: process.env.FE_URL,
-                    maxAge: 7*24*60*60*1000,
-                    sameSite: 'none'
+                res.cookie('refreshToken', refreshtoken, {
+                    httpOnly: true,
+                    secure: process.env.NODE_ENV == "dev" ? "auto" : true,
+                    domain: process.env.BE_URL,
+                    maxAge: 7 * 24 * 60 * 60 * 1000,
+                    sameSite: process.env.NODE_ENV == "dev" ? 'lax' : 'none'
                 });
-                if (results.usertype=="user"){
+                if (results.usertype == "user") {
+                    res.setHeader('userLoggedIn', true);
                     res.cookie('userLoggedIn', true, {
-                        maxAge: 7*24*60 * 60 * 1000,
-                        httpOnly:true,
-                        secure: true,
-                        domain: process.env.FE_URL,
-                        sameSite: 'none'
+                        maxAge: 7 * 24 * 60 * 60 * 1000,
+                        secure: process.env.NODE_ENV == "dev" ? "auto" : true,
+                        domain: process.env.BE_URL,
+                        sameSite: process.env.NODE_ENV == "dev" ? 'lax' : 'none'
                     });
-                }else{
+                } else {
+                    res.setHeader('adminLoggedIn', true);
                     res.cookie('adminLoggedIn', true, {
-                        maxAge: 7*24*60 * 60 * 1000,
-                        httpOnly:true,
-                        secure: true,
-                        domain: process.env.FE_URL,
-                        sameSite: 'none'
+                        maxAge: 7 * 24 * 60 * 60 * 1000,
+                        secure: process.env.NODE_ENV == "dev" ? "auto" : true,
+                        domain: process.env.BE_URL,
+                        sameSite: process.env.NODE_ENV == "dev" ? 'lax' : 'none'
                     });
                 }
-                
+
                 return res.send(
                     {
-                        message:'success'
+                        message: 'success',
+                        data: 'true'
                     }
                 )
-            }else{
+            } else {
                 return res.status(400).json(
                     {
                         success: 0,
                         message: "Invalid email or password"
                     }
-                ); 
+                );
             }
         });
     },
-    logout:(req,res)=>{
+    logout: (req, res) => {
         console.log(req)
         console.log(res);
-        res.cookie('accessToken','',{
+        res.cookie('accessToken', '', {
             maxAge: 0
         });
-        res.cookie('refreshToken','',{
+        res.cookie('refreshToken', '', {
             maxAge: 0
         });
         res.cookie('userLoggedIn', '', {
@@ -124,7 +134,7 @@ module.exports={
                 success: 1,
                 message: "Logout Successfully"
             }
-        ); 
+        );
 
     }
 

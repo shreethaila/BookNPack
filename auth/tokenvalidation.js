@@ -49,11 +49,11 @@ module.exports = {
 
                             res.cookie('accessToken', accesstoken, {
                                 httpOnly: true,
-                                secure: true,
-                                domain: process.env.FE_URL ,
-                                sameSite: 'none',
+                                domain: process.env.BE_URL,
+                                sameSite: process.env.NODE_ENV == "dev" ? 'lax' : 'none',
                                 maxAge: 60 * 60 * 1000
                             });
+                            res.setHeaders('accessToken', accesstoken);
                             
                             req.userId = decoded.uid;
                             next();
