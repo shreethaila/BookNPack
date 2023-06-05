@@ -7,7 +7,6 @@ const flightRouter=require('./api/flight/flight.router');
 const bookingRouter=require('./api/booking/booking.router');
 app.use(express.json())
 app.use(cors({
-    origin: process.env.FE_URL,
     credentials: true,
   }));
   app.use((req, res, next) => {
