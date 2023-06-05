@@ -50,7 +50,7 @@ module.exports = {
                             res.cookie('accessToken', accesstoken, {
                                 httpOnly: true,
                                 secure: true,
-                                domain: process.env.HOST,
+                                domain: "*",
                                 maxAge: 60 * 60 * 1000
                             });
                             
