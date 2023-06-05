@@ -20,6 +20,7 @@ app.use('/api/user', userRouter);
 app.use('/api/flight', flightRouter);
 app.use('/api/booking',bookingRouter);
 console.log(process.env.HOST);
-app.listen(process.env.APP_PORT,()=>{
-    console.log("server running"+process.env.APP_PORT);
+const server = app.listen(process.env.APP_PORT,()=>{
+    const port = server.address().port;
+    console.log("server running"+ port ? port : process.env.APP_PORT);
 });
