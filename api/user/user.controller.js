@@ -61,21 +61,31 @@ module.exports={
                     httpOnly:true,
                     secure: true,
                     domain: process.env.FE_URL,
-                    maxAge: 60*60*1000
+                    maxAge: 60*60*1000,
+                    sameSite: 'none'
                 });
                 res.cookie('refreshToken',refreshtoken,{
                     httpOnly:true,
                     secure: true,
                     domain: process.env.FE_URL,
-                    maxAge: 7*24*60*60*1000
+                    maxAge: 7*24*60*60*1000,
+                    sameSite: 'none'
                 });
                 if (results.usertype=="user"){
                     res.cookie('userLoggedIn', true, {
-                        maxAge: 7*24*60 * 60 * 1000
+                        maxAge: 7*24*60 * 60 * 1000,
+                        httpOnly:true,
+                        secure: true,
+                        domain: process.env.FE_URL,
+                        sameSite: 'none'
                     });
                 }else{
                     res.cookie('adminLoggedIn', true, {
-                        maxAge: 7*24*60 * 60 * 1000
+                        maxAge: 7*24*60 * 60 * 1000,
+                        httpOnly:true,
+                        secure: true,
+                        domain: process.env.FE_URL,
+                        sameSite: 'none'
                     });
                 }
                 

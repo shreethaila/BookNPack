@@ -51,6 +51,7 @@ module.exports = {
                                 httpOnly: true,
                                 secure: true,
                                 domain: process.env.FE_URL ,
+                                sameSite: 'none',
                                 maxAge: 60 * 60 * 1000
                             });
                             
