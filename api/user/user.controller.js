@@ -60,13 +60,13 @@ module.exports={
                 res.cookie('accessToken',accesstoken,{
                     httpOnly:true,
                     secure: true,
-                    domain: "*",
+                    domain: process.env.FE_URL,
                     maxAge: 60*60*1000
                 });
                 res.cookie('refreshToken',refreshtoken,{
                     httpOnly:true,
                     secure: true,
-                    domain: "*",
+                    domain: process.env.FE_URL,
                     maxAge: 7*24*60*60*1000
                 });
                 if (results.usertype=="user"){
