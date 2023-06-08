@@ -11,9 +11,9 @@ app.use(cors({
   credentials: true,
 }));
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', 'https://book-n-pack-fe.vercel.app/');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
-  res.header('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
   next();
 });
 
