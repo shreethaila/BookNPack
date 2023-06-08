@@ -1,4 +1,26 @@
 const pool = require('../../config/database');
+removesch:(data,callback)=>{
+    pool.query(
+        'call updateAndGetRow(?)',
+        [
+            data.fid
+        ],
+        (error, results, fields) => {
+            if (error) {
+                return callback(error);
+            }else{
+                results[0].forEach(row => {
+                    pool.query('update booking set status=\'cancelled\' where schid=?', [row.schid], (error, results, fields) => {
+                        if (error) {
+                            return callback(error);
+                        }
+                        return callback(null,result);
+                    })
+                });
+            }
+        }
+    )
+}
 module.exports = {
     addflight: (data, callback) => {
         pool.query(
@@ -16,12 +38,12 @@ module.exports = {
             }
         )
     },
-    addflightsch: (fid, data, callback) => {
+    addflightsch: (data, callback) => {
         console.log(data)
         pool.query(
             'insert into travelschedule (fid,source,destination,schdate,est_arrival_time,depature_time,fare) values (?,?,?,?,?,?,?)',
             [
-                fid,
+                data.fid,
                 data.source,
                 data.destination,
                 data.schdate,
@@ -93,99 +115,81 @@ module.exports = {
             }
         )
     },
-    removeflight: async (data, callback) => {
-        await pool.query(
-            'update flight set status=\'removed\' where fid=?',
-            [
-                data.fid
-            ],
-            (error, results, fields) => {
-                if (error) {
-                    return callback(error);
-                }
-            }
-        )
-        await pool.query(
-            'call updateAndGetRow(?)',
-            [
-                data.fid
-            ],
-            (error, results, fields) => {
-                if (error) {
-                    return callback(error);
-                }else{
-                    results[0].forEach(row => {
-                        pool.query('update booking set status=\'cancelled\' where schid=?', [row.schid], (error, results, fields) => {
-                            if (error) {
-                                return callback(error);
-                            }
-                            return callback(null,result);
-                        })
-                    });
-                }
-            }
-        )
+    
+    removeflight: (data, callback) => {
+        // pool.query(
+        //     'update flight set status=\'removed\' where fid=?',
+        //     [
+        //         data.fid
+        //     ],
+        //     (error, results, fields) => {
+        //         if (error) {
+        //             return callback(error);
+        //         }
+        //     }
+        // )
+        // removesch(data,callback);
         
 
-            // console.log("dao" + data.fid)
-            // pool.getConnection((error, connection) => {
-            //     if (error) {
-            //         connection.release();
-            //         return callback(error);
-            //     }
+            console.log("dao" + data.fid)
+            pool.getConnection((error, connection) => {
+                if (error) {
+                    connection.release();
+                    return callback(error);
+                }
 
-            //     connection.beginTransaction((error) => {
-            //     if (error) {
-            //         connection.release();
-            //         return callback(error);
-            //     }
+                connection.beginTransaction((error) => {
+                if (error) {
+                    connection.release();
+                    return callback(error);
+                }
 
-            //     connection.query('update flight set status=\'removed\' where fid=?', [data.fid], (error, result) => {
-            //         if (error) {
-            //             console.log("11errorrr")
-            //             connection.rollback(() => {
-            //                 connection.release();
-            //                 return callback(error);
-            //             });
-            //         }
+                connection.query('update flight set status=\'removed\' where fid=?', [data.fid], (error, result) => {
+                    if (error) {
+                        console.log("11errorrr")
+                        connection.rollback(() => {
+                            connection.release();
+                            return callback(error);
+                        });
+                    }
 
-            //         console.log("call prod")
-            //         connection.query('call updateAndGetRow(?)', [data.fid], (error, result) => {
-            //         if (error) {
-            //             console.log("errorrr")
-            //             connection.rollback(() => {
-            //                 connection.release();
-            //                 return callback(error);
-            //             });
-            //         }else{
-            //             result[0].forEach(row => {
-            //                 console.log("booking")
-            //                 connection.query('update booking set status=\'cancelled\' where schid=?', [row.schid], (error, result) => {
-            //                     if (error) {
-            //                         connection.rollback(() => {
-            //                             connection.release();
-            //                             return callback(error);
-            //                         });
-            //                     }
-            //                     connection.commit((error) => {
-            //                         if (error) {
-            //                         connection.rollback(() => {
-            //                             connection.release();
-            //                             return callback(error);
-            //                         });
-            //                         }
-            //                         connection.release();
-            //                         return callback(null,result);
+                    console.log("call prod")
+                    connection.query('call updateAndGetRow(?)', [data.fid], (error, result) => {
+                    if (error) {
+                        console.log("errorrr")
+                        connection.rollback(() => {
+                            connection.release();
+                            return callback(error);
+                        });
+                    }else{
+                        result[0].forEach(row => {
+                            console.log("booking")
+                            connection.query('update booking set status=\'cancelled\' where schid=?', [row.schid], (error, result) => {
+                                if (error) {
+                                    connection.rollback(() => {
+                                        connection.release();
+                                        return callback(error);
+                                    });
+                                }
+                                connection.commit((error) => {
+                                    if (error) {
+                                    connection.rollback(() => {
+                                        connection.release();
+                                        return callback(error);
+                                    });
+                                    }
+                                    connection.release();
+                                    return callback(null,result);
 
-            //                     });
-            //                 });
-            //             });
-            //         }
+                                });
+                            });
+                        });
+                    }
 
-            //     });
-            //     });
-            //     });
-            // });
+                });
+                });
+                });
+            });
 
         },
             cancelsch: (data, callback) => {
@@ -234,7 +238,7 @@ module.exports = {
             },
             searchbyall: (date, source, destination, callback) => {
                 pool.query(
-                    'select * from travelschedule where schdate=? and lower(source)=? and lower(destination)=?',
+                    'select t.schid,a.airlinename,f.flightnumber,t.source,t.destination,t.schdate,t.est_arrival_time,t.depature_time,t.fare from travelschedule t join flight f on t.fid=f.fid join airline a on f.aid=a.aid where t.schdate=? and lower(t.source)=? and lower(t.destination)=?',
                     [date, source, destination],
                     (error, results, fields) => {
                         if (error) {
