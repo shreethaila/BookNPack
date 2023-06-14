@@ -16,12 +16,12 @@ module.exports = {
             }
         )
     },
-    addflightsch: (fid, data, callback) => {
+    addflightsch: (data, callback) => {
         console.log(data)
         pool.query(
             'insert into travelschedule (fid,source,destination,schdate,est_arrival_time,depature_time,fare) values (?,?,?,?,?,?,?)',
             [
-                fid,
+                data.fid,
                 data.source,
                 data.destination,
                 data.schdate,
@@ -93,38 +93,52 @@ module.exports = {
             }
         )
     },
-    removeflight: async (data, callback) => {
-        await pool.query(
+    removeflight: (data, callback) => {
+        let resultsarr=[];
+        pool.query(
             'update flight set status=\'removed\' where fid=?',
             [
                 data.fid
             ],
             (error, results, fields) => {
+                console.log(error);
                 if (error) {
                     return callback(error);
                 }
-            }
-        )
-        await pool.query(
-            'call updateAndGetRow(?)',
-            [
-                data.fid
-            ],
-            (error, results, fields) => {
-                if (error) {
-                    return callback(error);
-                }else{
-                    results[0].forEach(row => {
-                        pool.query('update booking set status=\'cancelled\' where schid=?', [row.schid], (error, results, fields) => {
-                            if (error) {
-                                return callback(error);
+                pool.query(
+                    'call updateAndGetRow(?)',
+                    [
+                        data.fid
+                    ],
+                    (error, results, fields) => {
+                        console.log(error);
+                        console.log(results);
+                        if (error) {
+                            return callback(error);
+                        }else{
+                            console.log("hhhhhh");
+                            if(results[0].length == 0) {
+                                console.log("zero");
+                                return callback(null,resultsarr);
                             }
-                            return callback(null,result);
-                        })
-                    });
-                }
+                            results[0].forEach(row => {
+                                pool.query('update booking set status=\'cancelled\' where schid=?', [row.schid], (error, results, fields) => {
+                                    console.log("inside loop");
+                                    if (error) {
+                                        return callback(error);
+                                    }
+                                    resultsarr.push(results);
+                                })
+                            });
+                            return callback(null,resultsarr);
+                        }
+                    }
+                )
+                
             }
+
         )
+        
         
 
             // console.log("dao" + data.fid)
@@ -234,8 +248,8 @@ module.exports = {
             },
             searchbyall: (date, source, destination, callback) => {
                 pool.query(
-                    'select * from travelschedule where schdate=? and lower(source)=? and lower(destination)=?',
-                    [date, source, destination],
+                    'select a.airlinename,f.flightnumber,t.source,t.destination,t.schdate,t.est_arrival_time,t.depature_time,t.fare, t.schid, f.capacity-COALESCE(sum(b.booked_seats),0) as aseats from airline a join flight f on f.aid=a.aid join travelschedule t on t.fid=f.fid left join booking b on b.schid=t.schid where lower(source)=? and lower(destination)=? and t.schdate=? and t.status=\'active\' group by t.schid;',
+                    [source, destination,date],
                     (error, results, fields) => {
                         if (error) {
                             return callback(error);

@@ -51,7 +51,6 @@ module.exports = {
             const result = compareSync(body.password, results.password);
             let response = {};
             if (result) {
-                results.password = undefined;
                 const accesstoken = sign({ uid: results.uid }, process.env.ACCESS_KEY, {
                     expiresIn: "3s"
                 });
@@ -111,16 +110,28 @@ module.exports = {
         console.log(req)
         console.log(res);
         res.cookie('accessToken', '', {
-            maxAge: 0
+            maxAge: 0,
+            secure: process.env.NODE_ENV == "dev" ? "auto" : true,
+            domain: process.env.BE_URL,
+            sameSite: process.env.NODE_ENV == "dev" ? 'lax' : 'none'
         });
         res.cookie('refreshToken', '', {
-            maxAge: 0
+            maxAge: 0, 
+            secure: process.env.NODE_ENV == "dev" ? "auto" : true,
+            domain: process.env.BE_URL,
+            sameSite: process.env.NODE_ENV == "dev" ? 'lax' : 'none'
         });
         res.cookie('userLoggedIn', '', {
-            maxAge: 0
+            maxAge: 0,
+            secure: process.env.NODE_ENV == "dev" ? "auto" : true,
+            domain: process.env.BE_URL,
+            sameSite: process.env.NODE_ENV == "dev" ? 'lax' : 'none'
         });
         res.cookie('adminLoggedIn', '', {
-            maxAge: 0
+            maxAge: 0,
+            secure: process.env.NODE_ENV == "dev" ? "auto" : true,
+            domain: process.env.BE_URL,
+            sameSite: process.env.NODE_ENV == "dev" ? 'lax' : 'none'
         });
         return res.status(200).json(
             {

@@ -8,7 +8,7 @@ module.exports={
             [
                 data.fname,
                 data.lname,
-                data.authtype,
+                'password',
                 data.password,
                 data.phoneno,
                 data.address,

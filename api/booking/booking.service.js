@@ -5,7 +5,7 @@ module.exports={
             if (err){
                 return callback(err);
             }
-            console.log(results[0].occ_seats);
+            console.log(results);
             var occup_seats=results[0].occ_seats
             if (60-occup_seats-data.booked_seats>0){
                 //calculate fare
@@ -18,6 +18,9 @@ module.exports={
                 );
             }
         });
+    },
+    occupiedseats:(data,callback)=>{
+        occupiedseats(data,callback)
     },
     mybookings:(uid,callback)=>{
         mybookings(uid,callback);

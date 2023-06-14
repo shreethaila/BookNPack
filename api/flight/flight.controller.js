@@ -60,7 +60,7 @@ module.exports = {
             fid: req.params.id
         };
         console.log(body)
-        removeflight(body, (err, results) => {
+        removeflight(body, (err) => {
             if (err) {
                 console.log(err);
                 return res.status(500).json(
@@ -70,6 +70,7 @@ module.exports = {
                     }
                 );
             }
+            console.log("here remove");
             return res.status(200).json(
                 {
                     success: true

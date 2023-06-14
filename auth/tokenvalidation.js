@@ -13,14 +13,6 @@ module.exports = {
         let cookiestr = req.headers.cookie;
         const cookies = cookie.parse(cookiestr);
         let accesstoken = cookies.accessToken;
-        if (!accesstoken) {
-            return res.status('401').json(
-                {
-                    message: "Session expired login again"
-                }
-            );
-        }
-        console.log(accesstoken);
         verify(accesstoken, process.env.ACCESS_KEY, (err, decoded) => {
             if (err) {
                 if (err.name === "TokenExpiredError") {

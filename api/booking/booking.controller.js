@@ -1,5 +1,26 @@
-const {bookticket,mybookings,getbookings}=require('./booking.service');
+const {bookticket,mybookings,getbookings,occupiedseats}=require('./booking.service');
 module.exports={
+    occupiedseats:(req,res)=>{
+        const schid=req.params.schid;
+        const body={"schid":schid};
+        occupiedseats(body,(err,results)=>{
+            if (err){
+                console.log(err);
+                return res.status(500).json(
+                    {
+                        success: 0,
+                        message: "Database connection error"
+                    }
+                );
+            }
+            return res.status(200).json(
+                {
+                    success:1,
+                    data:results
+                }
+            );
+        });
+    },
     bookticket: (req,res)=>{
         var uid=req.userId;
         const body=req.body;
