@@ -39,7 +39,7 @@ module.exports = {
     },
     searchflight: (currdate, callback) => {
         pool.query(
-            'select * from travelschedule t join flight f on t.fid=f.fid join airline a on a.aid=f.aid where schdate>=? and t.status=\'active\'',
+            'select a.airlinename,f.flightnumber,t.source,t.destination,t.schdate,t.est_arrival_time,t.depature_time,t.fare, t.schid, f.capacity-COALESCE(sum(b.booked_seats),0) as aseats from airline a join flight f on f.aid=a.aid join travelschedule t on t.fid=f.fid left join booking b on b.schid=t.schid where schdate>=? and t.status=\'active\' group by t.schid order by schdate asc;',
             [
                 currdate
             ],
@@ -254,6 +254,7 @@ module.exports = {
                         if (error) {
                             return callback(error);
                         }
+                        console.log(results);
                         return callback(null, results);
                     }
                 )
@@ -283,5 +284,36 @@ module.exports = {
                         return callback(null, results);
                     }
                 )
+            },
+            searchbyplaces:(source,destination,callback)=>{
+                pool.query(
+                    'select a.airlinename,f.flightnumber,t.source,t.destination,t.schdate,t.est_arrival_time,t.depature_time,t.fare, t.schid, f.capacity-COALESCE(sum(b.booked_seats),0) as aseats from airline a join flight f on f.aid=a.aid join travelschedule t on t.fid=f.fid left join booking b on b.schid=t.schid where lower(source)=? and lower(destination)=? and t.status=\'active\' group by t.schid order by t.schdate asc;',
+                    [
+                        source,
+                        destination
+
+                    ],
+                    (error, results, fields) => {
+                        if (error) {
+                            return callback(error);
+                        }
+                        return callback(null, results);
+                    }
+                )
+            },
+            getfare:(schid,callback)=>{
+                pool.query(
+                    'select fare from travelschedule where schid=?',
+                    [
+                        schid
+                    ],
+                    (error, results, fields) => {
+                        if (error) {
+                            return callback(error);
+                        }
+                        return callback(null, results);
+                    }
+                )
+
             }
 }

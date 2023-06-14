@@ -1,4 +1,4 @@
-const {addflightsch,removeflight,cancelsch,searchflight,getairline,addflight,getflight}=require('./flight.controller');
+const {addflightsch,removeflight,cancelsch,searchflight,getairline,addflight,getflight,getfare}=require('./flight.controller');
 const router=require('express').Router();
 const {checkToken}=require('../../auth/tokenvalidation');
 router.post("/addsch",checkToken,addflightsch);
@@ -8,4 +8,5 @@ router.post("/cancelsch",checkToken,cancelsch);
 router.get("/getairline",checkToken,getairline);
 router.get("/getflight",checkToken,getflight);
 router.post("/addflight",checkToken,addflight);
+router.get("/getfare",checkToken,getfare);
 module.exports = router;

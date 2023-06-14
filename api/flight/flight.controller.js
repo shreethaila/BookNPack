@@ -1,4 +1,4 @@
-const { addflightsch, searchflight, removeflight, cancelsch, getairline, addflight, getflight } = require('./flight.service');
+const { addflightsch, searchflight, removeflight, cancelsch, getairline, addflight, getflight ,getfare} = require('./flight.service');
 const moment = require('moment');
 
 module.exports = {
@@ -33,10 +33,25 @@ module.exports = {
         });
     },
     searchflight: (req, res) => {
-        let source = req.query.source.toLowerCase();
-        let destination = req.query.destination.toLowerCase();
-        let date = req.query.date;
-        let time = req.query.time;
+        console.log(req.query);
+        let source;
+        let destination;
+        let date;
+        let time;
+        if (Object.keys(req.query).length === 0) {
+            
+            console.log("empty");
+           source = null;
+            date = null;
+            time = null;
+            destination = null;
+        } else {
+            source = req.query.source.toLowerCase();
+           destination = req.query.destination.toLowerCase();
+            date = req.query.date;
+            time = req.query.time;
+        }
+
         searchflight(date, time, source, destination, (err, results) => {
             if (err) {
                 console.log(err);
@@ -47,6 +62,16 @@ module.exports = {
                     }
                 );
             }
+            for (let i = 0; i < results.length; i++) {
+                const date = new Date(results[i].schdate);
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+
+                results[i].schdate = `${year}-${month}-${day}`;
+
+            }
+            console.log(results);
             return res.status(200).json(
                 {
                     success: 1,
@@ -77,12 +102,12 @@ module.exports = {
                 }
             );
         });
-            // return res.status(200).json(
-            //     {
-            //         success: true,
-            //         body: body
-            //     }
-            // );
+        // return res.status(200).json(
+        //     {
+        //         success: true,
+        //         body: body
+        //     }
+        // );
     },
     cancelsch: (req, res) => {
         const body = req.body;
@@ -145,6 +170,26 @@ module.exports = {
     }, getflight: (req, res) => {
         const aid = req.query.aid;
         getflight(aid, (err, results) => {
+            if (err) {
+                console.log(err);
+                return res.status(500).json(
+                    {
+                        success: 0,
+                        message: "Database connection error"
+                    }
+                );
+            }
+            return res.status(200).json(
+                {
+                    success: 1,
+                    data: results
+                }
+            );
+        })
+    },
+    getfare:(req,res)=>{
+        const schid = req.query.schid;
+        getfare(schid, (err, results) => {
             if (err) {
                 console.log(err);
                 return res.status(500).json(

@@ -1,4 +1,4 @@
-const { addflight, addflightsch, searchflight, searchflightByDate, searchflightByDateTime, getflightByAirlineId_Number, cancelsch, removeflight,searchbyall ,getairline,getflight} = require('./flight.dao');
+const { addflight, addflightsch, searchflight, searchflightByDate, searchflightByDateTime, getflightByAirlineId_Number, cancelsch, removeflight,searchbyall ,getairline,getflight,searchbyplaces,getfare} = require('./flight.dao');
 
 const moment = require('moment');
 
@@ -54,10 +54,15 @@ module.exports = {
         addflight(data, callback);
     },
     searchflight: (date, time,source,destination, callback) => {
-        if (date!=null && source!=null && destination!=null){
+        if (date=="null" && source!="null" && destination!="null"){
+            //console.log("i m heree");
+            searchbyplaces(source,destination,callback);
+        }else if (date!=null && source!=null && destination!=null){
+            console.log("1");
             searchbyall(date,source,destination,callback);
         }
         else if (date == null && time == null && source==null && destination==null) {
+            console.log("2");
             const currentDate = new Date();
             const year = currentDate.getFullYear();
             const month = String(currentDate.getMonth() + 1).padStart(2, '0');
@@ -68,8 +73,10 @@ module.exports = {
 
             searchflight(currdatestr,callback);
         } else if (time == null) {
+            console.log("3");
             searchflightByDate(date, callback);
         } else {
+            console.log("4");
             searchflightByDateTime(date, time, callback);
         }
     },
@@ -82,5 +89,8 @@ module.exports = {
     },
     getairline:(callback)=>{
         getairline(callback);
+    },
+    getfare:(schid,callback)=>{
+        getfare(schid,callback);
     }
 };
