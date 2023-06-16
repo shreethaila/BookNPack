@@ -1,5 +1,5 @@
 const { compareSync } = require('bcrypt');
-const { create, getalluser, getuserbyemail } = require('./user.service');
+const { create, getalluser, getuserbyemail ,getusername} = require('./user.service');
 const { sign } = require('jsonwebtoken');
 //in helper validate the json
 //purpose of controller is
@@ -140,6 +140,26 @@ module.exports = {
             }
         );
 
+    },
+    getusername:(req,res)=>{
+        var uid = req.userId;
+        getusername(uid, (err, results) => {
+            if (err) {
+                console.log(err);
+                return res.status(500).json(
+                    {
+                        success: 0,
+                        message: "Database connection error"
+                    }
+                );
+            }
+            return res.status(200).json(
+                {
+                    success: 1,
+                    data: results
+                }
+            );
+        });
     }
 
 }

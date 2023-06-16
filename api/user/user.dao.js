@@ -13,7 +13,7 @@ module.exports={
                 data.phoneno,
                 data.address,
                 data.email,
-                'user',
+                'admin',
                 'active'
 
             ],
@@ -48,6 +48,21 @@ module.exports={
                     return callback(error);
                 }
                 return callback(null,results[0]);
+            }
+        )
+    },
+    getusername:(uid,callback)=>{
+        console.log(uid);
+        pool.query(
+            'select fname from user where uid=?',
+            [
+                uid
+            ],
+            (error, results, fields)=>{
+                if (error){
+                    return callback(error);
+                }
+                return callback(null,results);
             }
         )
     }

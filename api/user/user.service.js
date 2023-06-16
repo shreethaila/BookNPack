@@ -1,5 +1,5 @@
 const {genSaltSync,hashSync,compareSync}=require('bcrypt');
-const {createuser,getalluser,getuserbyemail}=require('./user.dao');
+const {createuser,getalluser,getuserbyemail,getusername}=require('./user.dao');
 
 //used to perform business logic
 module.exports={
@@ -13,5 +13,8 @@ module.exports={
     },
     getuserbyemail: (data,callback)=>{
         getuserbyemail(data,callback);
+    },
+    getusername:(uid,callback)=>{
+        getusername(uid,callback);
     }
 };

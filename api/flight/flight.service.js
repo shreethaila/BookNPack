@@ -55,8 +55,14 @@ module.exports = {
     },
     searchflight: (date, time,source,destination, callback) => {
         if (date=="null" && source!="null" && destination!="null"){
-            //console.log("i m heree");
-            searchbyplaces(source,destination,callback);
+            const currentDate = new Date();
+            const year = currentDate.getFullYear();
+            const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+            const day = String(currentDate.getDate()).padStart(2, '0');
+
+            const currdatestr = `${year}-${month}-${day}`;
+            console.log(currdatestr);
+            searchbyplaces(source,destination,currdatestr,callback);
         }else if (date!=null && source!=null && destination!=null){
             console.log("1");
             searchbyall(date,source,destination,callback);

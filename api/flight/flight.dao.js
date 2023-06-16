@@ -1,4 +1,15 @@
 const pool = require('../../config/database');
+const util = require('util');
+const mysql = require('mysql2/promise');
+
+const pool1 = mysql.createPool({
+    port: process.env.DB_PORT,
+    host:process.env.DB_HOST,
+    user:process.env.USER,
+    password:process.env.PASS,
+    database:process.env.DB,
+    connectionLimit: 10
+});
 module.exports = {
     addflight: (data, callback) => {
         pool.query(
@@ -93,51 +104,125 @@ module.exports = {
             }
         )
     },
-    removeflight: (data, callback) => {
-        let resultsarr=[];
-        pool.query(
-            'update flight set status=\'removed\' where fid=?',
-            [
-                data.fid
-            ],
-            (error, results, fields) => {
-                console.log(error);
-                if (error) {
-                    return callback(error);
-                }
-                pool.query(
-                    'call updateAndGetRow(?)',
-                    [
-                        data.fid
-                    ],
-                    (error, results, fields) => {
-                        console.log(error);
-                        console.log(results);
-                        if (error) {
-                            return callback(error);
-                        }else{
-                            console.log("hhhhhh");
-                            if(results[0].length == 0) {
-                                console.log("zero");
-                                return callback(null,resultsarr);
-                            }
-                            results[0].forEach(row => {
-                                pool.query('update booking set status=\'cancelled\' where schid=?', [row.schid], (error, results, fields) => {
-                                    console.log("inside loop");
-                                    if (error) {
-                                        return callback(error);
-                                    }
-                                    resultsarr.push(results);
-                                })
-                            });
-                            return callback(null,resultsarr);
-                        }
-                    }
-                )
+    removeflight: async (data, callback) => {
+        let connection;
+      
+        try {
+          connection = await pool1.getConnection();
+          await connection.beginTransaction();
+      
+          await connection.query('UPDATE flight SET status=\'removed\' WHERE fid=?', [data.fid]);
+      
+          const [updateResults] = await connection.query('CALL updateAndGetRow(?)', [data.fid]);
+          const rows = updateResults[0];
+      
+          if (rows.length === 0) {
+            console.log("zero");
+            await connection.commit();
+            connection.release();
+            return callback(null, []);
+          }
+      
+          const resultsarr = [];
+      
+          for (const row of rows) {
+            await connection.query('UPDATE booking SET status=\'cancelled\' WHERE schid=?', [row.schid]);
+      
+            const [emailResults] = await connection.query(
+              'SELECT b.bid,u.email,a.airlinename,f.flightnumber,t.source,t.destination,b.booked_seats,t.schdate,b.dateofbooking FROM user u JOIN booking b ON u.uid=b.uid join travelschedule t on b.schid=t.schid join flight f on f.fid=t.fid join airline a on a.aid=f.aid WHERE b.schid=?',
+              [row.schid]
+            );
+      
+            resultsarr.push(emailResults);
+          }
+      
+          await connection.commit();
+          connection.release();
+      
+          console.log(resultsarr);
+          return callback(null, resultsarr);
+        } catch (error) {
+          if (connection) {
+            await connection.rollback();
+            connection.release();
+          }
+          return callback(error);
+        }
+      
+    // removeflight: async (data, callback) => {
+    //     pool.query(
+    //         'update flight set status=\'removed\' where fid=?',
+    //         [
+    //             data.fid
+    //         ],
+    //         (error, results, fields) => {
+    //             console.log(error);
+    //             if (error) {
+    //                 return callback(error);
+    //             }
+    //             console.log("1");
+    //             pool.query(
+    //                 'call updateAndGetRow(?)',
+    //                 [
+    //                     data.fid
+    //                 ],
+    //                 (error, results, fields) => {
+                        
+    //                     if (error) {
+    //                         return callback(error);
+    //                     }else{
+    //                         console.log("this re");
+    //                         console.log(results);
+    //                         if(results[0].length == 0) {
+    //                             console.log("zero");
+    //                             return callback(null,resultsarr);
+    //                         }
+    //                         let resultsarr=[]
+    //                         results[0].forEach(row => {
+    //                             pool.query('update booking set status=\'cancelled\' where schid=?', [row.schid], (error, results, fields) => {
+    //                                 //console.log("inside loop");
+    //                                 if (error) {
+    //                                     return callback(error);
+    //                                 }
+    //                                 console.log("3");
+    //                                 pool.query(
+    //                                     'select email from user u join (select uid from booking where schid=?) ss on u.uid=ss.uid',
+    //                                     [
+    //                                         row.schid
+                                            
+    //                                     ],
+    //                                     (error,results,fields)=>{
+    //                                         if (error){
+    //                                             return callback(error);
+    //                                         }else{
+    //                                             console.log("up")
+    //                                             console.log(results);
+    //                                             console.log("down");
+    //                                             resultsarr.push(results);
+    //                                         }
+    //                                     }
+    //                                 )
+    //                             })
+    //                             console.log("array")
+    //                             console.log(resultsarr);
+    //                             console.log("loop");
+    //                         });
+    //                         console.log("4");
+                            
+    //                         return callback(null,resultsarr);
+    //                         // console.log("resultarr");
+    //                         // console.log(resultsarr);
+    //                         // console.log("fullarr");
+    //                         // console.log(fullarr);
+    //                         // fullarr.push(resultsarr);
+    //                     }
+    //                 }
+    //             )
                 
-            }
+                
+    //         }
 
-        )
+    //     )
         
         
 
@@ -273,7 +358,7 @@ module.exports = {
             },
             getflight: (aid, callback) => {
                 pool.query(
-                    'select * from flight where aid=?',
+                    'select * from flight where aid=? and status=\'active\'',
                     [
                         aid
                     ],
@@ -285,12 +370,13 @@ module.exports = {
                     }
                 )
             },
-            searchbyplaces:(source,destination,callback)=>{
+            searchbyplaces:(source,destination,currdate,callback)=>{
                 pool.query(
-                    'select a.airlinename,f.flightnumber,t.source,t.destination,t.schdate,t.est_arrival_time,t.depature_time,t.fare, t.schid, f.capacity-COALESCE(sum(b.booked_seats),0) as aseats from airline a join flight f on f.aid=a.aid join travelschedule t on t.fid=f.fid left join booking b on b.schid=t.schid where lower(source)=? and lower(destination)=? and t.status=\'active\' group by t.schid order by t.schdate asc;',
+                    'select a.airlinename,f.flightnumber,t.source,t.destination,t.schdate,t.est_arrival_time,t.depature_time,t.fare, t.schid, f.capacity-COALESCE(sum(b.booked_seats),0) as aseats from airline a join flight f on f.aid=a.aid join travelschedule t on t.fid=f.fid left join booking b on b.schid=t.schid where lower(source)=? and lower(destination)=? and  t.schdate>= ? and t.status=\'active\' group by t.schid order by t.schdate asc;',
                     [
                         source,
-                        destination
+                        destination,
+                        currdate
 
                     ],
                     (error, results, fields) => {

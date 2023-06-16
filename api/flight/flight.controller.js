@@ -1,6 +1,6 @@
-const { addflightsch, searchflight, removeflight, cancelsch, getairline, addflight, getflight ,getfare} = require('./flight.service');
+const { addflightsch, searchflight, removeflight, cancelsch, getairline, addflight, getflight, getfare } = require('./flight.service');
 const moment = require('moment');
-
+const nodemailer = require('nodemailer');
 module.exports = {
     addflightsch: (req, res) => {
         const body = req.body;
@@ -39,15 +39,15 @@ module.exports = {
         let date;
         let time;
         if (Object.keys(req.query).length === 0) {
-            
+
             console.log("empty");
-           source = null;
+            source = null;
             date = null;
             time = null;
             destination = null;
         } else {
             source = req.query.source.toLowerCase();
-           destination = req.query.destination.toLowerCase();
+            destination = req.query.destination.toLowerCase();
             date = req.query.date;
             time = req.query.time;
         }
@@ -84,8 +84,8 @@ module.exports = {
         const body = {
             fid: req.params.id
         };
-        console.log(body)
-        removeflight(body, (err) => {
+        //console.log(body)
+        removeflight(body, (err, results) => {
             if (err) {
                 console.log(err);
                 return res.status(500).json(
@@ -96,18 +96,51 @@ module.exports = {
                 );
             }
             console.log("here remove");
+            console.log(results);
+            const transporter = nodemailer.createTransport({
+                service: 'gmail',
+                auth: {
+                    user: '2012075@nec.edu.in',
+                    pass: 'vinayaga12**'
+                }
+            });
+            for (let i = 0; i < results.length; i++) {
+                for (let j=0;j<results[i].length;j++){
+                    var htmlvar="<p>We regret to inform you that your ticket has been canceled.</p>"+
+                    "<p><b>Ticket Details</b></p><br>"+
+                    `<p><b>Ticket Id </b>${results[i][j].bid}<br>`+
+                    `<b>Airline Name </b>${results[i][j].airlinename}<br>`+
+                    `<b>Flight Number </b>${results[i][j].flightnumber}<br>`+
+                    `<b>Source </b>${results[i][j].source}<br>`+
+                    `<b>Destination </b>${results[i][j].destination}<br>`+
+                    `<b>Date </b>${results[i][j].schdate}<br>`+
+                    `<b>No of Seats </b>${results[i][j].booked_seats}<br>`+
+                    `<b>Date of Booking </b>${results[i][j].dateofbooking}</p>`+"<p>Sorry for the inconvenience and your payment will be refunded in few business days</p>";
+                    const mailOptions = {
+                        from: '2012075@nec.edu.in',
+                        to: results[i][j].email,
+                        subject: "BookNPack Ticket Cancellation",
+                        html: htmlvar
+                    };
+    
+                    transporter.sendMail(mailOptions, (error, info) => {
+                        if (error) {
+                            console.log(error);
+                            res.status(500).send('Error sending email');
+                        } else {
+                            console.log('Email sent: ' + info.response);
+                            //res.status(200).send('Email sent successfully');
+                        }
+                    });
+                }
+            }
             return res.status(200).json(
                 {
                     success: true
                 }
             );
         });
-        // return res.status(200).json(
-        //     {
-        //         success: true,
-        //         body: body
-        //     }
-        // );
+
     },
     cancelsch: (req, res) => {
         const body = req.body;
@@ -187,7 +220,7 @@ module.exports = {
             );
         })
     },
-    getfare:(req,res)=>{
+    getfare: (req, res) => {
         const schid = req.query.schid;
         getfare(schid, (err, results) => {
             if (err) {

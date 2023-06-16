@@ -1,4 +1,4 @@
-const { bookticket, mybookings, getbookings, occupiedseats } = require('./booking.service');
+const { bookticket, mybookings, getbookings, occupiedseats,cancelbooking } = require('./booking.service');
 const nodemailer = require('nodemailer');
 module.exports = {
     occupiedseats: (req, res) => {
@@ -23,44 +23,81 @@ module.exports = {
         });
     },
     bookticket: (req, res) => {
-        var uid = req.userId;
+        var uid = req.userId;  
         const body = req.body;
         body.uid = uid;
+
         bookticket(body, (err, results) => {
-            console.log(results[0].email);
-            if (err) {
+            let tableRows='';
+            for (const p of results.passenger) {
+                tableRows += `<tr>
+                                <td>${p.name}</td>
+                                <td>${p.age}</td>
+                                <td>${p.gender}</td>
+                              </tr>`;
+              }
+            console.log(results);
+            let variable = `
+            <html>
+    <head>
+      <style>
+        table {
+          border-collapse: collapse;
+        }
+        th, td {
+          border: 1px solid black;
+          padding: 8px;
+        }
+      </style>
+    </head>
+    <body>
+    <p>Dear ${results.fname},\n\nYour ${results.booked_seats} ticket(s) has been booked successfully.\n\n Your ticket id is ${results.bid}.\n\nThank you for choosing BookNPack.</p>`+
+    `<table>
+        <tr>
+          <th>Passenger Name</th>
+          <th>Age</th>
+          <th>Gender</th>
+        </tr>
+        ${tableRows}
+    
+            </tr>
+      </table>
+    </body>
+  </html>`
+                console.log(results.email);
+                if (err) {
 
-                console.log(err);
-                return res.status(500).json(
-                    {
-                        success: 0,
-                        message: "Database connection error"
+                    console.log(err);
+                    return res.status(500).json(
+                        {
+                            success: 0,
+                            message: "Database connection error"
+                        }
+                    );
+                }
+                const transporter = nodemailer.createTransport({
+                    service: 'gmail',
+                    auth: {
+                        user: '2012075@nec.edu.in', 
+                        pass: GMAIL_PASS 
                     }
-                );
-            }
-            const transporter = nodemailer.createTransport({
-                service: 'gmail',
-                auth: {
-                    user: '2012075@nec.edu.in', 
-                    pass: 'vinayaga12**' 
-                }
-            });
-            const mailOptions = {
-                from: '2012075@nec.edu.in',
-                to: results[0].email,
-                subject: "BookNPack Ticket Booking",
-                text: "Ticket booked successfully"
-            };
+                });
+                const mailOptions = {
+                    from: '2012075@nec.edu.in',
+                    to: results.email,
+                    subject: "BookNPack Ticket Booking",
+                    html: variable
+                };
 
-            transporter.sendMail(mailOptions, (error, info) => {
-                if (error) {
-                    console.log(error);
-                    res.status(500).send('Error sending email');
-                } else {
-                    console.log('Email sent: ' + info.response);
-                    //res.status(200).send('Email sent successfully');
-                }
-            });
+                transporter.sendMail(mailOptions, (error, info) => {
+                    if (error) {
+                        console.log(error);
+                        res.status(500).send('Error sending email');
+                    } else {
+                        console.log('Email sent: ' + info.response);
+                        //res.status(200).send('Email sent successfully');
+                    }
+                });
             return res.status(200).json(
                 {
                     success: 1,
@@ -138,5 +175,25 @@ module.exports = {
                 }
             );
         });
+    },
+    cancelbooking:(req,res)=>{
+        var bid=req.params.bid;
+        cancelbooking(bid,(err,results)=>{
+            if (err) {
+                console.log(err);
+                return res.status(500).json(
+                    {
+                        success: 0,
+                        message: "Database connection error"
+                    }
+                );
+            }
+            return res.status(200).json(
+                {
+                    success: 1,
+                    data: results
+                }
+            );
+        })
     }
 }

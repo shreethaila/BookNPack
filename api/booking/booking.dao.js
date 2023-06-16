@@ -2,6 +2,7 @@ const pool = require('../../config/database');
 module.exports = {
     bookticket: (data, callback) => {
         let resultsarr=[];
+        var bookid;
         pool.query(
             'insert into booking (schid,uid,booked_seats,totalamt,dateofbooking,status) values (?,?,?,?,?,?)',
             [
@@ -19,6 +20,7 @@ module.exports = {
                 for (const p of data.passenger) {
                     console.log(p);
                     console.log(results.insertId);
+                    bookid=results.insertId;
                     pool.query(
                         'insert into passenger (bid,name,age,gender,proof_type,proofid) values (?,?,?,?,?,?)',
                         [
@@ -42,7 +44,7 @@ module.exports = {
 
                 }
                 pool.query(
-                    'select email from user where uid=?',
+                    'select fname,email from user where uid=?',
                     [
                         data.uid
                     ],
@@ -51,7 +53,10 @@ module.exports = {
                         if (error){
                             return callback(error);
                         }else{
-                            return callback(null,results);
+                            data.bid=bookid;
+                            data.fname=results[0].fname;
+                            data.email=results[0].email;
+                            return callback(null,data);
                         }
                     }
                 )
@@ -61,7 +66,7 @@ module.exports = {
     },
     occupiedseats: (data, callback) => {
         pool.query(
-            'select sum(booked_seats)as occ_seats from booking where schid=?',
+            'select COALESCE(sum(booked_seats),0) as occ_seats from booking where schid=?',
             [
                 data.schid
             ],
@@ -144,6 +149,20 @@ module.exports = {
                     return callback(error);
                 }
                 return callback(null, results);
+            }
+        )
+    },
+    cancelbooking:(bid,callback)=>{
+        pool.query(
+            'update booking set status=\'cancelled\' where bid=?',
+            [
+                bid
+            ],
+            (error,results,fields)=>{
+                if (error){
+                    return callback(error);
+                }
+                return callback(null,results);
             }
         )
     }
