@@ -100,8 +100,8 @@ module.exports = {
             const transporter = nodemailer.createTransport({
                 service: 'gmail',
                 auth: {
-                    user: '2012075@nec.edu.in',
-                    pass: 'vinayaga12**'
+                    user: process.env.GMAIL,
+                    pass: process.env.GMAIL_PASS
                 }
             });
             for (let i = 0; i < results.length; i++) {
@@ -117,7 +117,7 @@ module.exports = {
                     `<b>No of Seats </b>${results[i][j].booked_seats}<br>`+
                     `<b>Date of Booking </b>${results[i][j].dateofbooking}</p>`+"<p>Sorry for the inconvenience and your payment will be refunded in few business days</p>";
                     const mailOptions = {
-                        from: '2012075@nec.edu.in',
+                        from: process.env.GMAIL,
                         to: results[i][j].email,
                         subject: "BookNPack Ticket Cancellation",
                         html: htmlvar

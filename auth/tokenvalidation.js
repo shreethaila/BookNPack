@@ -19,7 +19,7 @@ module.exports = {
                     console.log("expired");
                     const refreshtoken = cookies.refreshToken;
                     if (!refreshtoken) {
-                        return res.status('401').json(
+                        return res.status(401).json(
                             {
                                 message: "Session expired login again"
                             }
@@ -27,13 +27,13 @@ module.exports = {
                     }
                     verify(refreshtoken, process.env.REFRESH_KEY, (err, decoded) => {
                         if (err) {
-                            return res.status('401').json(
+                            return res.status(401).json(
                                 {
                                     message: "Session expired login again"
                                 }
                             );
                         } else {
-
+                            console.log("id");
                             console.log(decoded);
                             const accesstoken = sign({ uid: decoded.uid }, process.env.ACCESS_KEY, {
                                 expiresIn: "30s"

@@ -13,11 +13,13 @@ const pool1 = mysql.createPool({
 module.exports = {
     addflight: (data, callback) => {
         pool.query(
-            'insert into flight (flightnumber,aid,capacity) values (?,?,?);',
+            'insert into flight (flightnumber,aid,focc,bocc,eocc) values (?,?,?,?,?);',
             [
                 data.flightnumber,
                 data.aid,
-                data.capacity
+                data.focc,
+                data.bocc,
+                data.eocc
             ],
             (error, results, fields) => {
                 if (error) {
@@ -30,7 +32,7 @@ module.exports = {
     addflightsch: (data, callback) => {
         console.log(data)
         pool.query(
-            'insert into travelschedule (fid,source,destination,schdate,est_arrival_time,depature_time,fare) values (?,?,?,?,?,?,?)',
+            'insert into travelschedule (fid,source,destination,schdate,est_arrival_time,depature_time,firstclass,businessclass,economyclass) values (?,?,?,?,?,?,?,?,?)',
             [
                 data.fid,
                 data.source,
@@ -38,7 +40,9 @@ module.exports = {
                 data.schdate,
                 data.est_arrival_time,
                 data.depature_time,
-                data.fare
+                data.firstclass,
+                data.businessclass,
+                data.economyclass
             ],
             (error, results, fields) => {
                 if (error) {
@@ -50,7 +54,7 @@ module.exports = {
     },
     searchflight: (currdate, callback) => {
         pool.query(
-            'select a.airlinename,f.flightnumber,t.source,t.destination,t.schdate,t.est_arrival_time,t.depature_time,t.fare, t.schid, f.capacity-COALESCE(sum(b.booked_seats),0) as aseats from airline a join flight f on f.aid=a.aid join travelschedule t on t.fid=f.fid left join booking b on b.schid=t.schid where schdate>=? and t.status=\'active\' group by t.schid order by schdate asc;',
+            'select a.airlinename,f.flightnumber,t.source,t.destination,t.schdate,t.est_arrival_time,t.depature_time,t.firstclass,t.economyclass,t.businessclass, t.schid, f.focc - COALESCE(SUM(CASE WHEN b.seattype = \'f\' THEN b.booked_seats ELSE 0 END), 0) AS frem,   f.bocc - COALESCE(SUM(CASE WHEN b.seattype = \'b\' THEN b.booked_seats ELSE 0 END), 0) AS brem, f.eocc-COALESCE(SUM(CASE WHEN b.seattype=\'e\' THEN b.booked_seats ELSE 0 END),0) as erem from airline a join flight f on f.aid=a.aid join travelschedule t on t.fid=f.fid left join booking b on b.schid=t.schid where schdate>=? and t.status=\'active\' group by t.schid, f.focc, f.bocc,f.eocc order by schdate asc;',
             [
                 currdate
             ],
@@ -333,7 +337,7 @@ module.exports = {
             },
             searchbyall: (date, source, destination, callback) => {
                 pool.query(
-                    'select a.airlinename,f.flightnumber,t.source,t.destination,t.schdate,t.est_arrival_time,t.depature_time,t.fare, t.schid, f.capacity-COALESCE(sum(b.booked_seats),0) as aseats from airline a join flight f on f.aid=a.aid join travelschedule t on t.fid=f.fid left join booking b on b.schid=t.schid where lower(source)=? and lower(destination)=? and t.schdate=? and t.status=\'active\' group by t.schid;',
+                    'select a.airlinename,f.flightnumber,t.source,t.destination,t.schdate,t.est_arrival_time,t.depature_time,t.firstclass,t.economyclass,t.businessclass, t.schid,  t.schid, f.focc - COALESCE(SUM(CASE WHEN b.seattype = \'f\' THEN b.booked_seats ELSE 0 END), 0) AS frem,   f.bocc - COALESCE(SUM(CASE WHEN b.seattype = \'b\' THEN b.booked_seats ELSE 0 END), 0) AS brem, f.eocc-COALESCE(SUM(CASE WHEN b.seattype=\'e\' THEN b.booked_seats ELSE 0 END),0) as erem from airline a join flight f on f.aid=a.aid join travelschedule t on t.fid=f.fid left join booking b on b.schid=t.schid where lower(source)=? and lower(destination)=? and t.schdate=? and t.status=\'active\' group by t.schid;',
                     [source, destination,date],
                     (error, results, fields) => {
                         if (error) {
@@ -358,7 +362,7 @@ module.exports = {
             },
             getflight: (aid, callback) => {
                 pool.query(
-                    'select * from flight where aid=? and status=\'active\'',
+                    'select * from flight where aid=?',
                     [
                         aid
                     ],
@@ -372,12 +376,11 @@ module.exports = {
             },
             searchbyplaces:(source,destination,currdate,callback)=>{
                 pool.query(
-                    'select a.airlinename,f.flightnumber,t.source,t.destination,t.schdate,t.est_arrival_time,t.depature_time,t.fare, t.schid, f.capacity-COALESCE(sum(b.booked_seats),0) as aseats from airline a join flight f on f.aid=a.aid join travelschedule t on t.fid=f.fid left join booking b on b.schid=t.schid where lower(source)=? and lower(destination)=? and  t.schdate>= ? and t.status=\'active\' group by t.schid order by t.schdate asc;',
+                    'select a.airlinename,f.flightnumber,t.source,t.destination,t.schdate,t.est_arrival_time,t.depature_time,t.firstclass,t.businessclass,t.economyclass, t.schid,  t.schid, f.focc - COALESCE(SUM(CASE WHEN b.seattype = \'f\' THEN b.booked_seats ELSE 0 END), 0) AS frem,   f.bocc - COALESCE(SUM(CASE WHEN b.seattype = \'b\' THEN b.booked_seats ELSE 0 END), 0) AS brem, f.eocc-COALESCE(SUM(CASE WHEN b.seattype=\'e\' THEN b.booked_seats ELSE 0 END),0) as erem from airline a join flight f on f.aid=a.aid join travelschedule t on t.fid=f.fid left join booking b on b.schid=t.schid where lower(source)=? and lower(destination)=? and  t.schdate>= ? and t.status=\'active\' group by t.schid order by t.schdate asc;',
                     [
                         source,
                         destination,
                         currdate
-
                     ],
                     (error, results, fields) => {
                         if (error) {
@@ -389,7 +392,7 @@ module.exports = {
             },
             getfare:(schid,callback)=>{
                 pool.query(
-                    'select fare from travelschedule where schid=?',
+                    'select firstclass,economyclass,businessclass from travelschedule where schid=?',
                     [
                         schid
                     ],

@@ -1,5 +1,8 @@
-const {bookticket,occupiedseats,mybookings,getallbookings,getbookingByFlightNumber,getbookingByFlightNumberAndDate,getbookingsByFlightNumberDateTime,cancelbooking}=require('./booking.dao');
+const {bookticket,occupiedseats,mybookings,getallbookings,getbookingByFlightNumber,getbookingByFlightNumberAndDate,getbookingsByFlightNumberDateTime,cancelbooking,getpassengers}=require('./booking.dao');
 module.exports={
+    getpassengers:(bid,callback)=>{
+        getpassengers(bid,callback);
+    },
     bookticket:(data,callback)=>{
         occupiedseats(data,(err,results)=>{
             if (err){

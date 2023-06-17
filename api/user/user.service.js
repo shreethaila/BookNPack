@@ -1,20 +1,40 @@
-const {genSaltSync,hashSync,compareSync}=require('bcrypt');
-const {createuser,getalluser,getuserbyemail,getusername}=require('./user.dao');
+const { genSaltSync, hashSync, compareSync } = require('bcrypt');
+const { createuser, getalluser, getuserbyemail, getusername, updatetoken, checkemail, updatestatus, updateadmin } = require('./user.dao');
+const { NULL } = require('mysql/lib/protocol/constants/types');
 
 //used to perform business logic
-module.exports={
-    create: (data,callback)=>{
-        const salt=genSaltSync(10);
-        data.password=hashSync(data.password,salt);
-        createuser(data,callback);
+module.exports = {
+    updateadmin: (data, callback) => {
+        if ('password' in data) {
+            const salt = genSaltSync(10);
+            data.password = hashSync(data.password, salt);
+        }
+        updateadmin(data, callback);
     },
-    getalluser:(callback)=>{
+    checkemail: (token, callback) => {
+        checkemail(token, callback);
+    },
+    updatestatus: (uid, callback) => {
+        updatestatus(uid, callback);
+    },
+    create: (data, callback) => {
+        if ('password' in data) {
+            const salt = genSaltSync(10);
+            data.password = hashSync(data.password, salt);
+        }
+        console.log(data);
+        createuser(data, callback);
+    },
+    getalluser: (callback) => {
         getalluser(callback);
     },
-    getuserbyemail: (data,callback)=>{
-        getuserbyemail(data,callback);
+    getuserbyemail: (data, callback) => {
+        getuserbyemail(data, callback);
     },
-    getusername:(uid,callback)=>{
-        getusername(uid,callback);
+    getusername: (uid, callback) => {
+        getusername(uid, callback);
+    },
+    updatetoken: (token,uid, callback) => {
+        updatetoken(token,uid, callback);
     }
 };

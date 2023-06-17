@@ -1,17 +1,34 @@
 const pool = require('../../config/database');
 module.exports = {
+    getpassengers:(bid,callback)=>{
+        pool.query(
+            'select * from passenger where bid=?',
+            [
+                bid
+            ],
+            (error, results, fields) => {
+                if (error) {
+                    return callback(error);
+                }
+                return callback(null, results);
+            }
+        )
+    },
+
     bookticket: (data, callback) => {
-        let resultsarr=[];
+        console.log(data);
+        let resultsarr = [];
         var bookid;
         pool.query(
-            'insert into booking (schid,uid,booked_seats,totalamt,dateofbooking,status) values (?,?,?,?,?,?)',
+            'insert into booking (schid,uid,booked_seats,totalamt,dateofbooking,status,seattype) values (?,?,?,?,?,?,?)',
             [
                 data.schid,
                 data.uid,
                 data.booked_seats,
-                data.totalamt,
+                data.totalamount,
                 new Date(),
-                'active'
+                'active',
+                data.seattype
             ],
             (error, results, fields) => {
                 if (error) {
@@ -20,23 +37,23 @@ module.exports = {
                 for (const p of data.passenger) {
                     console.log(p);
                     console.log(results.insertId);
-                    bookid=results.insertId;
+                    bookid = results.insertId;
                     pool.query(
-                        'insert into passenger (bid,name,age,gender,proof_type,proofid) values (?,?,?,?,?,?)',
+                        'insert into passenger (bid,name,age,gender,proof_type,proofid,seatno) values (?,?,?,?,?,?,?)',
                         [
                             results.insertId,
                             p.name,
                             p.age,
                             p.gender,
                             p.proof_type,
-                            p.proof_id
-
+                            p.proof_id,
+                            p.seatno
                         ],
-                        (error,results,fields)=>{
+                        (error, results, fields) => {
                             console.log(results);
-                            if (error){
+                            if (error) {
                                 return callback(error);
-                            }else{
+                            } else {
                                 resultsarr.push(results);
                             }
                         }
@@ -48,15 +65,15 @@ module.exports = {
                     [
                         data.uid
                     ],
-                    (error,results,fields)=>{
+                    (error, results, fields) => {
                         console.log(results);
-                        if (error){
+                        if (error) {
                             return callback(error);
-                        }else{
-                            data.bid=bookid;
-                            data.fname=results[0].fname;
-                            data.email=results[0].email;
-                            return callback(null,data);
+                        } else {
+                            data.bid = bookid;
+                            data.fname = results[0].fname;
+                            data.email = results[0].email;
+                            return callback(null, data);
                         }
                     }
                 )
@@ -66,9 +83,10 @@ module.exports = {
     },
     occupiedseats: (data, callback) => {
         pool.query(
-            'select COALESCE(sum(booked_seats),0) as occ_seats from booking where schid=?',
+            ' SELECT   COALESCE(SUM(b.booked_seats), 0) AS occ_seats,   t.focc,   t.bocc,   t.eocc FROM   (SELECT s.schid, f.focc, f.bocc, f.eocc    FROM flight f    JOIN travelschedule s ON f.fid = s.fid    WHERE s.schid = ?) AS t LEFT JOIN   booking b ON b.schid = t.schid AND b.seattype = ? GROUP BY   f.focc,   f.bocc,   f.eocc;',
             [
-                data.schid
+                data.schid,
+                data.seattype
             ],
             (error, results, fields) => {
                 if (error) {
@@ -80,7 +98,7 @@ module.exports = {
     },
     mybookings: (uid, callback) => {
         pool.query(
-            'select b.bid,a.airlinename, f.flightnumber, t.source,t.destination, t.schdate,t.est_arrival_time,t.depature_time,b.booked_seats,b.totalamt,b.dateofbooking,b.status from booking b join travelschedule t on b.schid=t.schid join flight f on f.fid=t.fid join airline a on a.aid=f.aid where uid=? order by t.schdate asc',
+            'select b.bid,b.totalamt,b.seattype,a.airlinename, f.flightnumber, t.source,t.destination, t.schdate,t.est_arrival_time,t.depature_time,b.booked_seats,b.totalamt,b.dateofbooking,b.status from booking b join travelschedule t on b.schid=t.schid join flight f on f.fid=t.fid join airline a on a.aid=f.aid where uid=? order by b.dateofbooking desc',
             [
                 uid
             ],
@@ -152,17 +170,28 @@ module.exports = {
             }
         )
     },
-    cancelbooking:(bid,callback)=>{
+    cancelbooking: (bid, callback) => {
         pool.query(
             'update booking set status=\'cancelled\' where bid=?',
             [
                 bid
             ],
-            (error,results,fields)=>{
-                if (error){
+            (error, results, fields) => {
+                if (error) {
                     return callback(error);
                 }
-                return callback(null,results);
+                pool.query(
+                    'select u.email,b.bid,a.airlinename,f.flightnumber,t.source,t.destination,t.schdate,b.booked_seats,b.dateofbooking from airline a join flight f on a.aid=f.aid join travelschedule t on t.fid=f.fid join booking b on t.schid=b.schid join user u on u.uid=b.uid where b.bid=?',
+                    [
+                        bid
+                    ],
+                    (error, results, fields) => {
+                        if (error) {
+                            return callback(error);
+                        }
+                        return callback(null, results);
+                    }
+                )
             }
         )
     }

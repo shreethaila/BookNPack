@@ -1,6 +1,13 @@
 const { compareSync } = require('bcrypt');
-const { create, getalluser, getuserbyemail ,getusername} = require('./user.service');
+const { create, getalluser, getuserbyemail, getusername, updatetoken, checkemail, updatestatus,updateadmin } = require('./user.service');
 const { sign } = require('jsonwebtoken');
+const crypto = require('crypto');
+const nodemailer = require('nodemailer');
+const generateVerificationToken = () => {
+    const tokenLength = 32;
+    const buffer = crypto.randomBytes(tokenLength);
+    return buffer.toString('hex');
+};
 //in helper validate the json
 //purpose of controller is
 //1.interact with client
@@ -8,8 +15,67 @@ const { sign } = require('jsonwebtoken');
 //3.invoke service methods
 //4.return resposne
 module.exports = {
+    updateadmin:(req,res)=>{
+        const body = req.body;
+        updateadmin(body, (err, results) => {
+            if (err) {
+                console.log(err);
+                return res.status(500).json(
+                    {
+                        success: 0,
+                        message: "Database connection error"
+                    }
+                );
+            }
+            return res.status(200).json(
+                {
+                    success: 1,
+                    data: results
+                }
+            );
+        });
+    },
+    updatestatus: (req, res) => {
+        const uid = req.params.uid;
+        updatestatus(uid, (err, results) => {
+            if (err) {
+                console.log(err);
+                return res.status(500).json(
+                    {
+                        success: 0,
+                        message: "Database connection error"
+                    }
+                );
+            }
+            return res.status(200).json(
+                {
+                    success: 1,
+                    data: results
+                });
+        })
+    },
+    checkemail: (req, res) => {
+        const token = req.params.token;
+        checkemail(token, (err, results) => {
+            if (err) {
+                console.log(err);
+                return res.status(500).json(
+                    {
+                        success: 0,
+                        message: "Database connection error"
+                    }
+                );
+            }
+            return res.status(200).json(
+                {
+                    success: 1,
+                    data: results
+                });
+        })
+    },
     createUser: (req, res) => {
         const body = req.body;
+        console.log(body);
         create(body, (err, results) => {
             if (err) {
                 console.log(err);
@@ -20,6 +86,63 @@ module.exports = {
                     }
                 );
             }
+            const verificationToken = generateVerificationToken();
+            console.log(verificationToken);
+            updatetoken(verificationToken,results.insertId, (err, results) => {
+                if (err) {
+                    console.log(err);
+                    return res.status(500).json(
+                        {
+                            success: 0,
+                            message: "Database connection error"
+                        }
+                    );
+                }
+            });
+            let url;
+            let variable;
+            let sub;
+            if (body.usertype == 'admin') {
+                url = `http://localhost:3001/admininvite?token=${verificationToken}`
+                sub = 'BookNPack Admin Invitation'
+                variable = `<p>Dear ${body.fname},</p>
+                <p>You are invited to join as an admin in BookNPack</p>
+                <p><a href=${url}>Click this link</a></p>
+                <p>Best regards,</p>
+                <p>Your BookNPack Team</p>`
+            } else if (body.usertype == 'user') {
+                url = `http://localhost:3001/verify?token=${verificationToken}`
+                console.log(url);
+                variable = `<p>Dear ${body.fname},</p>
+                <p>Thank you for signing up. Please click the link below to verify your email address:</p>
+                <p><a href=${url}>Verify Email</a></p>
+                <p>If you did not sign up for an account, you can safely ignore this email.</p>
+                <p>Best regards,</p>
+                <p>Your BacKNPack Team</p>`
+            }
+            const transporter = nodemailer.createTransport({
+                service: 'gmail',
+                auth: {
+                    user: process.env.GMAIL,
+                    pass: process.env.GMAIL_PASS
+                }
+            });
+            const mailOptions = {
+                from: process.env.GMAIL,
+                to: body.email,
+                subject: sub,
+                html: variable
+            };
+
+            transporter.sendMail(mailOptions, (error, info) => {
+                if (error) {
+                    console.log(error);
+                    res.status(500).send('Error sending email');
+                } else {
+                    console.log('Email sent: ' + info.response);
+                    //res.status(200).send('Email sent successfully');
+                }
+            });
             return res.status(200).json(
                 {
                     success: 1,
@@ -74,7 +197,7 @@ module.exports = {
                     sameSite: process.env.NODE_ENV == "dev" ? 'lax' : 'none'
                 });
                 if (results.usertype == "user") {
-             
+
                     res.cookie('userLoggedIn', true, {
                         maxAge: 7 * 24 * 60 * 60 * 1000,
                         secure: process.env.NODE_ENV == "dev" ? "auto" : true,
@@ -82,7 +205,7 @@ module.exports = {
                         sameSite: process.env.NODE_ENV == "dev" ? 'lax' : 'none'
                     });
                 } else {
-        
+
                     res.cookie('adminLoggedIn', true, {
                         maxAge: 7 * 24 * 60 * 60 * 1000,
                         secure: process.env.NODE_ENV == "dev" ? "auto" : true,
@@ -116,7 +239,7 @@ module.exports = {
             sameSite: process.env.NODE_ENV == "dev" ? 'lax' : 'none'
         });
         res.cookie('refreshToken', '', {
-            maxAge: 0, 
+            maxAge: 0,
             secure: process.env.NODE_ENV == "dev" ? "auto" : true,
             domain: process.env.BE_URL,
             sameSite: process.env.NODE_ENV == "dev" ? 'lax' : 'none'
@@ -141,7 +264,7 @@ module.exports = {
         );
 
     },
-    getusername:(req,res)=>{
+    getusername: (req, res) => {
         var uid = req.userId;
         getusername(uid, (err, results) => {
             if (err) {
