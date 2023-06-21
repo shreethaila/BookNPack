@@ -1,6 +1,5 @@
 const { genSaltSync, hashSync, compareSync } = require('bcrypt');
 const { createuser, getalluser, getuserbyemail, getusername, updatetoken, checkemail, updatestatus, updateadmin,getuserdetails,changepassword,updateprofile } = require('./user.dao');
-const { NULL } = require('mysql/lib/protocol/constants/types');
 //used to perform business logic
 module.exports = {
     updateadmin: (data, callback) => {
