@@ -1,5 +1,11 @@
-const {bookticket,occupiedseats,mybookings,getallbookings,getbookingByFlightNumber,getbookingByFlightNumberAndDate,getbookingsByFlightNumberDateTime,cancelbooking,getpassengers}=require('./booking.dao');
+const {bookticket,occupiedseats,mybookings,getallbookings,getbookingByFlightNumber,getbookingByFlightNumberAndDate,getbookingsByFlightNumberDateTime,cancelbooking,getpassengers,getbookingcountbyschid,getbookingcountbyfid,getseatno}=require('./booking.dao');
 module.exports={
+    getbookingcountbyschid:(schid,callback)=>{
+        getbookingcountbyschid(schid,callback);
+    },
+    getbookingcountbyfid:(fid,callback)=>{
+        getbookingcountbyfid(fid,callback);
+    },
     getpassengers:(bid,callback)=>{
         getpassengers(bid,callback);
     },
@@ -23,6 +29,9 @@ module.exports={
     },
     occupiedseats:(data,callback)=>{
         occupiedseats(data,callback)
+    },
+    getseatno:(data,callback)=>{
+        getseatno(data,callback)
     },
     mybookings:(uid,callback)=>{
         mybookings(uid,callback);

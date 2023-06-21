@@ -9,7 +9,7 @@ module.exports = {
                 }
             );
         }
-        console.log(req.headers.cookie);
+        //console.log(req.headers.cookie);
         let cookiestr = req.headers.cookie;
         const cookies = cookie.parse(cookiestr);
         let accesstoken = cookies.accessToken;
@@ -36,7 +36,7 @@ module.exports = {
                             console.log("id");
                             console.log(decoded);
                             const accesstoken = sign({ uid: decoded.uid }, process.env.ACCESS_KEY, {
-                                expiresIn: "30s"
+                                expiresIn: "30m"
                             });
 
                             res.cookie('accessToken', accesstoken, {

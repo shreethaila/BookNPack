@@ -1,6 +1,7 @@
-const {createUser,getuserbyemail,logout,getusername,checkemail,updatestatus,updateadmin}=require('./user.controller');
+const {createUser,getuserbyemail,logout,getusername,checkemail,updatestatus,updateadmin,changepassword,updateprofile}=require('./user.controller');
 const router=require('express').Router();
 const {checkToken}=require('../../auth/tokenvalidation');
+const { getuserdetails } = require('./user.controller');
 router.post("/signup",createUser);
 router.post("/adminsignup",checkToken,createUser);
 router.post("/login",getuserbyemail);
@@ -9,4 +10,7 @@ router.get("/getname",checkToken,getusername);
 router.get("/checktoken/:token",checkemail);
 router.get("/updatestatus/:uid",updatestatus);
 router.post("/updateadmin",updateadmin);
+router.get("/getuserdetails",checkToken,getuserdetails);
+router.post("/changepassword",checkToken,changepassword);
+router.post("/updateprofile",checkToken,updateprofile);
 module.exports = router;

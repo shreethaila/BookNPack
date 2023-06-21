@@ -83,7 +83,22 @@ module.exports = {
     },
     occupiedseats: (data, callback) => {
         pool.query(
-            ' SELECT   COALESCE(SUM(b.booked_seats), 0) AS occ_seats,   t.focc,   t.bocc,   t.eocc FROM   (SELECT s.schid, f.focc, f.bocc, f.eocc    FROM flight f    JOIN travelschedule s ON f.fid = s.fid    WHERE s.schid = ?) AS t LEFT JOIN   booking b ON b.schid = t.schid AND b.seattype = ? GROUP BY   f.focc,   f.bocc,   f.eocc;',
+            ' SELECT  COALESCE(SUM(b.booked_seats), 0) AS occ_seats,   t.focc,   t.bocc,   t.eocc FROM   (SELECT s.schid, f.focc, f.bocc, f.eocc    FROM flight f    JOIN travelschedule s ON f.fid = s.fid    WHERE s.schid = ?) AS t LEFT JOIN   booking b ON b.schid = t.schid AND b.seattype = ? and b.status=\'active\' GROUP BY   f.focc,   f.bocc,   f.eocc;',
+            [
+                data.schid,
+                data.seattype
+            ],
+            (error, results, fields) => {
+                if (error) {
+                    return callback(error);
+                }
+                return callback(null, results);
+            }
+        )
+    },
+    getseatno: (data, callback) => {
+        pool.query(
+            'SELECT p.seatno FROM booking b JOIN passenger p ON b.bid = p.bid WHERE b.schid=? and b.seattype=? and b.status=\'active\';',
             [
                 data.schid,
                 data.seattype
@@ -98,7 +113,7 @@ module.exports = {
     },
     mybookings: (uid, callback) => {
         pool.query(
-            'select b.bid,b.totalamt,b.seattype,a.airlinename, f.flightnumber, t.source,t.destination, t.schdate,t.est_arrival_time,t.depature_time,b.booked_seats,b.totalamt,b.dateofbooking,b.status from booking b join travelschedule t on b.schid=t.schid join flight f on f.fid=t.fid join airline a on a.aid=f.aid where uid=? order by b.dateofbooking desc',
+            'select a.logo,b.bid,b.totalamt,b.seattype,a.airlinename, f.flightnumber, t.source,t.destination, t.schdate,t.est_arrival_time,t.depature_time,b.booked_seats,b.totalamt,b.dateofbooking,b.status from booking b join travelschedule t on b.schid=t.schid join flight f on f.fid=t.fid join airline a on a.aid=f.aid where uid=? order by b.dateofbooking desc',
             [
                 uid
             ],
@@ -127,7 +142,7 @@ module.exports = {
     },
     getbookingByFlightNumber: (fn, callback) => {
         pool.query(
-            'select u.email,b.bid,a.airlinename, f.flightnumber, t.source,t.destination, t.schdate,t.est_arrival_time,t.depature_time,b.booked_seats,b.totalamt,b.dateofbooking,b.status from booking b join travelschedule t on b.schid=t.schid join flight f on f.fid=t.fid join airline a on a.aid=f.aid join user u on b.uid=u.uid where t.fid=? order by dateofbooking desc',
+            'select a.logo,u.email,b.bid,a.airlinename, f.flightnumber, t.source,t.destination, t.schdate,t.est_arrival_time,t.depature_time,b.booked_seats,b.totalamt,b.dateofbooking,b.status from booking b join travelschedule t on b.schid=t.schid join flight f on f.fid=t.fid join airline a on a.aid=f.aid join user u on b.uid=u.uid where t.fid=? order by dateofbooking desc',
             [
                 fn
             ],
@@ -141,7 +156,7 @@ module.exports = {
     },
     getbookingByFlightNumberAndDate: (fn, date, callback) => {
         pool.query(
-            'select u.email,b.bid,a.airlinename, f.flightnumber, t.source,t.destination, t.schdate,t.est_arrival_time,t.depature_time,b.booked_seats,b.totalamt,b.dateofbooking,b.status from booking b join travelschedule t on b.schid=t.schid join flight f on f.fid=t.fid join airline a on a.aid=f.aid join user u on b.uid=u.uid where t.fid=? and t.schdate=? order by dateofbooking desc',
+            'select a.logo,u.email,b.bid,a.airlinename, f.flightnumber, t.source,t.destination, t.schdate,t.est_arrival_time,t.depature_time,b.booked_seats,b.totalamt,b.dateofbooking,b.status from booking b join travelschedule t on b.schid=t.schid join flight f on f.fid=t.fid join airline a on a.aid=f.aid join user u on b.uid=u.uid where t.fid=? and t.schdate=? order by dateofbooking desc',
             [
                 fn,
                 date
@@ -181,7 +196,7 @@ module.exports = {
                     return callback(error);
                 }
                 pool.query(
-                    'select u.email,b.bid,a.airlinename,f.flightnumber,t.source,t.destination,t.schdate,b.booked_seats,b.dateofbooking from airline a join flight f on a.aid=f.aid join travelschedule t on t.fid=f.fid join booking b on t.schid=b.schid join user u on u.uid=b.uid where b.bid=?',
+                    'select a.logo,u.email,b.bid,a.airlinename,f.flightnumber,t.source,t.destination,t.schdate,b.booked_seats,b.dateofbooking from airline a join flight f on a.aid=f.aid join travelschedule t on t.fid=f.fid join booking b on t.schid=b.schid join user u on u.uid=b.uid where b.bid=?',
                     [
                         bid
                     ],
@@ -194,7 +209,35 @@ module.exports = {
                 )
             }
         )
-    }
+    },
+    getbookingcountbyschid: (schid,callback) => {
+        pool.query(
+            'select exists(select 1 from booking where schid=? and status=\'active\') as record_exists;',
+            [
+                schid
+            ],
+            (error, results, fields) => {
+                if (error) {
+                    return callback(error);
+                }
+                return callback(null, results);
+            }
+        )
+    },
+    getbookingcountbyfid: (fid,callback) => {
+        pool.query(
+            'select exists(select 1 from flight f join travelschedule t on f.fid=t.fid right join booking b on b.schid=t.schid where f.fid=?) as record_exists;',
+            [
+                fid
+            ],
+            (error, results, fields) => {
+                if (error) {
+                    return callback(error);
+                }
+                return callback(null, results);
+            }
+        )
+    },
 
 
 }

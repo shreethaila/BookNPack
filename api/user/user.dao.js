@@ -1,4 +1,5 @@
 const pool = require('../../config/database');
+const { compareSync } = require('bcrypt');
 //db access such as queries
 //mapping query results to domain objects
 module.exports = {
@@ -116,6 +117,71 @@ module.exports = {
             'select fname from user where uid=?',
             [
                 uid
+            ],
+            (error, results, fields) => {
+                if (error) {
+                    return callback(error);
+                }
+                return callback(null, results);
+            }
+        )
+    },
+    getuserdetails:(uid,callback)=>{
+        console.log(uid);
+        pool.query(
+            'select fname,lname,email,phoneno,address from user where uid=?',
+            [
+                uid
+            ],
+            (error, results, fields) => {
+                if (error) {
+                    return callback(error);
+                }
+                return callback(null, results);
+            }
+        )
+    },
+    changepassword:(data,callback)=>{
+        pool.query(
+            'select * from user where uid=?',
+            [
+                data.uid
+            ],
+            (error,results,feilds)=>{
+                console.log("fetch result");
+                console.log(results);
+                const result = compareSync(data.oldpassword, results[0].password);
+                if (result){
+                    pool.query(
+                        'update user set password=? where uid=?',
+                        [
+                            data.password,
+                            data.uid
+                        ],
+                        (error, results, fields) => {
+                            if (error) {
+                                return callback(error);
+                            }
+                            return callback(null, {'result':'password changed'});
+                        }
+                    )
+                }else{
+                    return callback(null,{'result':'invalid old password'});
+                }
+            }
+        )
+        
+    },
+    updateprofile:(data,callback)=>{
+        pool.query(
+            'update user set fname=?,lname=?,email=?,phoneno=?,address=? where uid=?',
+            [
+                data.fname,
+                data.lname,
+                data.email,
+                data.phoneno,
+                data.address,
+                data.uid
             ],
             (error, results, fields) => {
                 if (error) {

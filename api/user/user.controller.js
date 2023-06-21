@@ -1,5 +1,5 @@
 const { compareSync } = require('bcrypt');
-const { create, getalluser, getuserbyemail, getusername, updatetoken, checkemail, updatestatus,updateadmin } = require('./user.service');
+const { create, getalluser, getuserbyemail, getusername, updatetoken, checkemail, updatestatus,updateadmin,getuserdetails,changepassword,updateprofile } = require('./user.service');
 const { sign } = require('jsonwebtoken');
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
@@ -18,6 +18,28 @@ module.exports = {
     updateadmin:(req,res)=>{
         const body = req.body;
         updateadmin(body, (err, results) => {
+            if (err) {
+                console.log(err);
+                return res.status(500).json(
+                    {
+                        success: 0,
+                        message: "Database connection error"
+                    }
+                );
+            }
+            return res.status(200).json(
+                {
+                    success: 1,
+                    data: results
+                }
+            );
+        });
+    },
+    updateprofile:(req,res)=>{
+        const body = req.body;
+        const uid=req.userId;
+        body.uid=uid;
+        updateprofile(body, (err, results) => {
             if (err) {
                 console.log(err);
                 return res.status(500).json(
@@ -175,7 +197,7 @@ module.exports = {
             let response = {};
             if (result) {
                 const accesstoken = sign({ uid: results.uid }, process.env.ACCESS_KEY, {
-                    expiresIn: "3s"
+                    expiresIn: "30m"
                 });
                 const refreshtoken = sign({ uid: results.uid }, process.env.REFRESH_KEY, {
                     expiresIn: "1w"
@@ -267,6 +289,48 @@ module.exports = {
     getusername: (req, res) => {
         var uid = req.userId;
         getusername(uid, (err, results) => {
+            if (err) {
+                console.log(err);
+                return res.status(500).json(
+                    {
+                        success: 0,
+                        message: "Database connection error"
+                    }
+                );
+            }
+            return res.status(200).json(
+                {
+                    success: 1,
+                    data: results
+                }
+            );
+        });
+    },
+    getuserdetails: (req, res) => {
+        var uid = req.userId;
+        getuserdetails(uid, (err, results) => {
+            if (err) {
+                console.log(err);
+                return res.status(500).json(
+                    {
+                        success: 0,
+                        message: "Database connection error"
+                    }
+                );
+            }
+            return res.status(200).json(
+                {
+                    success: 1,
+                    data: results
+                }
+            );
+        });
+    },
+    changepassword:(req,res)=>{
+        var uid = req.userId;
+        var body=req.body;
+        body.uid=uid;
+        changepassword(body, (err, results) => {
             if (err) {
                 console.log(err);
                 return res.status(500).json(

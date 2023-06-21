@@ -1,6 +1,46 @@
-const { bookticket, mybookings, getbookings, occupiedseats, cancelbooking, getpassengers } = require('./booking.service');
+const { bookticket, mybookings, getbookings, occupiedseats, cancelbooking, getpassengers,getbookingcountbyschid,getbookingcountbyfid,getseatno} = require('./booking.service');
 const nodemailer = require('nodemailer');
 module.exports = {
+    getbookingcountbyfid:(req,res)=>{
+        const fid=req.params.fid;
+        getbookingcountbyfid(fid,(err,results)=>{
+            if (err) {
+                console.log(err);
+                return res.status(500).json(
+                    {
+                        success: 0,
+                        message: "Database connection error"
+                    }
+                );
+            }
+            return res.status(200).json(
+                {
+                    success: 1,
+                    data: results
+                }
+            );
+        })
+    },
+    getbookingcountbyschid:(req,res)=>{
+        const schid=req.params.schid;
+        getbookingcountbyschid(schid,(err,results)=>{
+            if (err) {
+                console.log(err);
+                return res.status(500).json(
+                    {
+                        success: 0,
+                        message: "Database connection error"
+                    }
+                );
+            }
+            return res.status(200).json(
+                {
+                    success: 1,
+                    data: results
+                }
+            );
+        })
+    },
     getpassengers: (req, res) => {
         const bid = req.params.bid;
         getpassengers(bid, (err, results) => {
@@ -26,6 +66,28 @@ module.exports = {
         const seattype = req.params.seattype;
         const body = { "schid": schid, "seattype": seattype };
         occupiedseats(body, (err, results) => {
+            if (err) {
+                console.log(err);
+                return res.status(500).json(
+                    {
+                        success: 0,
+                        message: "Database connection error"
+                    }
+                );
+            }
+            return res.status(200).json(
+                {
+                    success: 1,
+                    data: results
+                }
+            );
+        });
+    },
+    getseatno: (req, res) => {
+        const schid = req.params.schid;
+        const seattype = req.params.seattype;
+        const body = { "schid": schid, "seattype": seattype };
+        getseatno(body, (err, results) => {
             if (err) {
                 console.log(err);
                 return res.status(500).json(

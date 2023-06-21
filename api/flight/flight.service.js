@@ -1,4 +1,4 @@
-const { addflight, addflightsch, searchflight, searchflightByDate, searchflightByDateTime, getflightByAirlineId_Number, cancelsch, removeflight,searchbyall ,getairline,getflight,searchbyplaces,getfare} = require('./flight.dao');
+const { addflight, addflightsch, searchflight, searchflightByDate, searchflightByDateTime, getflightByAirlineId_Number, cancelsch, removeflight, searchbyall, getairline, getflight, searchbyplaces, getfare,getschbyids,getschbyall,getflightbyfid,updateflight,getschedule,updateschedule} = require('./flight.dao');
 
 const moment = require('moment');
 
@@ -7,9 +7,9 @@ const addFlightSchForStAndEnDate = (data, callback) => {
     const results = [];
     const startDate = moment(JSON.stringify(data.stFormattedData));
     const endDate = moment(JSON.stringify(data.endFormattedDate));
-    
+
     const currentDate = moment(startDate);
-    
+
     while (currentDate.isSameOrBefore(endDate)) {
         data.schdate = currentDate.format('YYYY-MM-DD');
         addflightsch(data, (err, result) => {
@@ -23,6 +23,12 @@ const addFlightSchForStAndEnDate = (data, callback) => {
 
 //used to perform business logic
 module.exports = {
+    getflightbyfid:(fid,callback)=>{
+        getflightbyfid(fid,callback);
+    },
+    getschedule:(schid,callback)=>{
+        getschedule(schid,callback);
+    },
     getflight: (data, callback) => {
         getflight(data, callback);
     },
@@ -40,7 +46,7 @@ module.exports = {
         //                     return;
         //                 } else {
         //                     console.log(results);
-                            
+
         //                     addFlightSchForStAndEnDate(results.insertId, data, callback);
         //                 }
         //             });
@@ -53,8 +59,8 @@ module.exports = {
     addflight: (data, callback) => {
         addflight(data, callback);
     },
-    searchflight: (date, time,source,destination, callback) => {
-        if (date=="null" && source!="null" && destination!="null"){
+    searchflight: (date, time, source, destination, callback) => {
+        if (date == "null" && source != "null" && destination != "null") {
             const currentDate = new Date();
             const year = currentDate.getFullYear();
             const month = String(currentDate.getMonth() + 1).padStart(2, '0');
@@ -62,12 +68,12 @@ module.exports = {
 
             const currdatestr = `${year}-${month}-${day}`;
             console.log(currdatestr);
-            searchbyplaces(source,destination,currdatestr,callback);
-        }else if (date!=null && source!=null && destination!=null){
+            searchbyplaces(source, destination, currdatestr, callback);
+        } else if (date != null && source != null && destination != null) {
             console.log("1");
-            searchbyall(date,source,destination,callback);
+            searchbyall(date, source, destination, callback);
         }
-        else if (date == null && time == null && source==null && destination==null) {
+        else if (date == null && time == null && source == null && destination == null) {
             console.log("2");
             const currentDate = new Date();
             const year = currentDate.getFullYear();
@@ -77,7 +83,7 @@ module.exports = {
             const currdatestr = `${year}-${month}-${day}`;
             console.log(currdatestr);
 
-            searchflight(currdatestr,callback);
+            searchflight(currdatestr, callback);
         } else if (time == null) {
             console.log("3");
             searchflightByDate(date, callback);
@@ -93,10 +99,26 @@ module.exports = {
     cancelsch: (data, callback) => {
         cancelsch(data, callback);
     },
-    getairline:(callback)=>{
+    getairline: (callback) => {
         getairline(callback);
     },
-    getfare:(schid,callback)=>{
-        getfare(schid,callback);
+    getfare: (schid, callback) => {
+        getfare(schid, callback);
+    },
+    getsch: (aid, fid, date, callback) => {
+
+        if (date == "null" || date==null) {
+            console.log("2");
+            getschbyids(aid,fid,callback);
+        } else if (aid!=null && fid!=null && date!=null) {
+            console.log("3");
+            getschbyall(aid,fid,date,callback);
+        } 
+    },
+    updateflight:(body,callback)=>{
+        updateflight(body,callback);
+    },
+    updateschedule:(body,callback)=>{
+        updateschedule(body,callback);
     }
 };
